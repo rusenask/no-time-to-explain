@@ -7,12 +7,14 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/google/cayley"
 )
 
 // DBClient provides access to cache, http client and configuration
 type Handler struct {
 	http *http.Client
 	cfg  *Configuration
+	DB   *cayley.Handle
 }
 
 // Member struct holds information about each member

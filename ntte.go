@@ -16,10 +16,12 @@ func main() {
 
 	// getting settings
 	cfg := InitSettings()
+	db := InitDB()
 
 	d := Handler{
 		http: &http.Client{},
 		cfg:  cfg,
+		DB:   db,
 	}
 
 	// deciding what to do
