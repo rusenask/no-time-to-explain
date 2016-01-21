@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/google/cayley"
@@ -14,7 +15,8 @@ import (
 type Handler struct {
 	http *http.Client
 	cfg  *Configuration
-	DB   *cayley.Handle
+	g    *cayley.Handle
+	qs   *cayley.QuadStore
 }
 
 // Member struct holds information about each member
@@ -91,5 +93,17 @@ func (h *Handler) getMembers(groupName string, pageSize int) ([]Member, error) {
 		return members, err
 	}
 
+	// populating graph
+	for _, v := range mr.Results {
+		h.connectMemberMeetup(v, groupName)
+	}
+
 	return mr.Results, nil
+}
+
+// connectMemberMeetup - connects members with meetups
+// [member] ----follows----> [meetup]
+func (h *Handler) connectMemberMeetup(member Member, meetup string) (err error) {
+	err = h.addQuad(strconv.Itoa(member.ID), "follows", meetup)
+	return
 }
