@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/google/cayley"
 	"github.com/google/cayley/graph"
 	_ "github.com/google/cayley/graph/bolt"
@@ -47,4 +48,16 @@ func (h *Handler) addQuad(subject, predicate, object string) (err error) {
 	}).Info("quad added")
 
 	return
+}
+
+func (h *Handler) printAllQuads() {
+	iter := h.g.QuadsAllIterator()
+	n, _ := iter.Size()
+
+	for i := int64(0); i < n; i++ {
+		graph.Next(iter)
+		r := iter.Result()
+		q := h.g.Quad(r)
+		fmt.Printf("%s - %s -> %s [%s]\n", q.Subject, q.Predicate, q.Object, q.Label)
+	}
 }
