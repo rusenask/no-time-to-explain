@@ -11,17 +11,18 @@ func main() {
 	log.SetFormatter(&log.TextFormatter{})
 
 	fetch := flag.String("fetch", "", "fetch some meetup, url required")
+	printAll := flag.Bool("all", false, "print all quads")
 
 	flag.Parse()
 
 	// getting settings
 	cfg := InitSettings()
-	db := InitDB()
+	graph := InitDB()
 
 	d := Handler{
 		http: &http.Client{},
 		cfg:  cfg,
-		DB:   db,
+		g:    graph,
 	}
 
 	// deciding what to do
@@ -33,12 +34,17 @@ func main() {
 		members, err := d.getMembers(*fetch, 200)
 
 		if err == nil {
-			for _, v := range members {
-				log.Printf("Member %s, ID %d ", v.Name, v.ID)
-			}
-			return
+			log.WithFields(log.Fields{
+				"meetup": *fetch,
+				"count":  len(members),
+			}).Info("members added!")
 		}
 
+		return
+	}
+
+	if *printAll {
+		d.printAllQuads()
 		return
 	}
 
