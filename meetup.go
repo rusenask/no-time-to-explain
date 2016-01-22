@@ -46,9 +46,19 @@ type MembersResponse struct {
 	Results []Member     `json:"results"`
 }
 
+// getMembers - gets all members for given meetup
 func (h *Handler) getMembers(groupName string, pageSize int) ([]Member, error) {
-	//	https://api.meetup.com/2/members?group_urlname=frontend&page=200&key=343f7567781b654151e2c635c5445a&order=name
+	// creating initial url
 	url := fmt.Sprintf("%smembers?group_urlname=%s&page=%d&key=%s", h.cfg.meetupEndpoint, groupName, pageSize, h.cfg.appKey)
+
+	return h._getMembers(url, pageSize)
+
+}
+
+// _getMembers - recursively dives into meetup, fetching all pages till the end
+func (h *Handler) _getMembers(url string, pageSize int) ([]Member, error) {
+	//	https://api.meetup.com/2/members?group_urlname=frontend&page=200&key=343f7567781b654151e2c635c5445a&order=name
+	//	url := fmt.Sprintf("%smembers?group_urlname=%s&page=%d&key=%s", h.cfg.meetupEndpoint, groupName, pageSize, h.cfg.appKey)
 
 	var members []Member
 
@@ -91,6 +101,20 @@ func (h *Handler) getMembers(groupName string, pageSize int) ([]Member, error) {
 			"key":   h.cfg.appKey,
 		}).Error("failed to unmarshal response from API")
 		return members, err
+	}
+
+	if mr.Meta.Next != "" {
+		moreMembers, err := h._getMembers(mr.Meta.Next, pageSize)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+				"url":   mr.Meta.Next,
+				"key":   h.cfg.appKey,
+			}).Error("failed to follow trail of members")
+		} else {
+			mr.Results = append(mr.Results, moreMembers...)
+		}
+
 	}
 
 	return mr.Results, nil
