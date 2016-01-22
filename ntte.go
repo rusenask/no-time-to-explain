@@ -4,7 +4,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"flag"
+	"fmt"
 	"net/http"
+	"strings"
 )
 
 func main() {
@@ -12,6 +14,7 @@ func main() {
 
 	fetch := flag.String("fetch", "", "fetch some meetup, url required")
 	printAll := flag.Bool("all", false, "print all quads")
+	intersect := flag.String("intersect", "", "find intersecting users from meetups, separated by comma")
 
 	flag.Parse()
 
@@ -48,9 +51,36 @@ func main() {
 		return
 	}
 
+	// printing all quads
 	if *printAll {
 		d.printAllQuads()
 		return
+	}
+
+	// looking for intersections
+	if *intersect != "" {
+		meetups := strings.Split(RemoveSpaces(*intersect), ",")
+		members, err := d.findIntersectingMembers(meetups)
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"meetups": meetups,
+				"error":   err.Error(),
+			}).Error("failed ")
+			return
+		}
+
+		for _, v := range members {
+			fmt.Printf("Member %s (ID %d) belongs to: %q\n", v.Name, v.ID, strings.Split(*intersect, ","))
+		}
+
+		log.WithFields(log.Fields{
+			"meetups": *intersect,
+			"count":   len(members),
+		}).Info("intersection retrieved!")
+
+		return
+
 	}
 
 	// nothing?
