@@ -152,3 +152,13 @@ func (h *Handler) findMember(id string) (member Member) {
 	return
 }
 
+// RemoveSpaces - surprisingly removes spaces
+func RemoveSpaces(str string) string {
+	return strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) {
+			return -1
+		}
+		return r
+	}, str)
+}
+
