@@ -93,17 +93,19 @@ func (h *Handler) getMembers(groupName string, pageSize int) ([]Member, error) {
 		return members, err
 	}
 
-	// populating graph
-	for _, v := range mr.Results {
-		h.connectMemberMeetup(v, groupName)
-	}
-
 	return mr.Results, nil
 }
 
 // connectMemberMeetup - connects members with meetups
-// [member] ----follows----> [meetup]
 func (h *Handler) connectMemberMeetup(member Member, meetup string) (err error) {
+
+	// [member] ----follows----> [meetup]
 	err = h.addQuad(strconv.Itoa(member.ID), "follows", meetup)
+
+	// adding kind and details
+	err = h.addQuad(strconv.Itoa(member.ID), "kind", "user")
+	err = h.addQuad(strconv.Itoa(member.ID), "named", member.Name)
+	err = h.addQuad(strconv.Itoa(member.ID), "lives", member.City)
+	err = h.addQuad(strconv.Itoa(member.ID), "marked", member.Status)
 	return
 }
