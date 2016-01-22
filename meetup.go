@@ -6,9 +6,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
+	"unicode"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/google/cayley"
+	"github.com/google/cayley/graph/path"
 )
 
 // DBClient provides access to cache, http client and configuration
@@ -190,4 +193,20 @@ func (h *Handler) _getLesserPath(current string, nodes []string) *path.Path {
 		}
 	}
 	return p
+}
+
+func (h *Handler) findIntersectingMembers(meetups []string) (members []Member, err error) {
+	log.WithFields(log.Fields{
+		"meetups0": meetups[0],
+		"meetups1": meetups[1],
+	}).Info("starting intersect!")
+
+	p := h._getMasterPath(meetups)
+
+	it := p.BuildIterator()
+	for cayley.RawNext(it) {
+		//		log.Println(h.g.NameOf(it.Result()))
+		members = append(members, h.findMember(h.g.NameOf(it.Result())))
+	}
+	return members, nil
 }
