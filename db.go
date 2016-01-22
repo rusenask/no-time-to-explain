@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"github.com/google/cayley"
 	"github.com/google/cayley/graph"
-	_ "github.com/google/cayley/graph/bolt"
+	_ "github.com/google/cayley/graph/leveldb"
 
 	log "github.com/Sirupsen/logrus"
 )
 
 func InitDB() *cayley.Handle {
 	// Initialize the database
-	graph.InitQuadStore("bolt", "cayley.db", nil)
+	graph.InitQuadStore("leveldb", "cayley.db", nil)
 
 	// Open and use the database
-	db, err := cayley.NewGraph("bolt", "cayley.db", nil)
+	db, err := cayley.NewGraph("leveldb", "cayley.db", nil)
 
 	if err != nil {
 		log.WithFields(log.Fields{
