@@ -162,6 +162,23 @@ func RemoveSpaces(str string) string {
 	}, str)
 }
 
+func (h *Handler) _getMasterPath(nodes []string) *path.Path {
+	//	 getting initial path
+	p := cayley.StartPath(h.g, nodes[0]).In("follows")
+
+	// add what should users follow as well
+	for _, node := range nodes[1:] {
+		p.Has("follows", node)
+	}
+
+	for _, n := range nodes[1:] {
+		thisPath := h._getLesserPath(n, nodes)
+		p.And(thisPath)
+	}
+
+	return p
+}
+
 func (h *Handler) _getLesserPath(current string, nodes []string) *path.Path {
 	// getting initial path
 	p := cayley.StartPath(h.g, current).In("follows")
