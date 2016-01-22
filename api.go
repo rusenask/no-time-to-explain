@@ -1,4 +1,3 @@
-package no_time_to_explain
 package main
 
 import (
@@ -27,4 +26,21 @@ func (h *Handler) startAdminInterface() {
 	}).Info("web interface is starting...")
 
 	n.Run(fmt.Sprintf(":%s", h.cfg.port))
+}
+
+// getBoneRouter returns mux for admin interface
+func getBoneRouter(d Handler) *bone.Mux {
+	mux := bone.New()
+
+	mux.Get("/api/intersect", http.HandlerFunc(d.IntersectionHandler))
+
+	mux.HandleFunc("/*", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/")
+	})
+
+	return mux
+}
+
+func (h *Handler) IntersectionHandler(w http.ResponseWriter, req *http.Request) {
+
 }
