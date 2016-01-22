@@ -1,3 +1,10 @@
+# examples
+
+example london query:
+g.V('LondonR').As('source').In('follows').As('target').All()
+
+
+
 http://www.meetup.com/meetup_api/docs/2/members/
 
 https://secure.meetup.com/meetup_api/console/?path=/2/members

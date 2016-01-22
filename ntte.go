@@ -33,6 +33,11 @@ func main() {
 
 		members, err := d.getMembers(*fetch, 200)
 
+		// populating graph
+		for _, v := range members {
+			d.connectMemberMeetup(v, *fetch)
+		}
+
 		if err == nil {
 			log.WithFields(log.Fields{
 				"meetup": *fetch,
