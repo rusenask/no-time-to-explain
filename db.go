@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/google/cayley"
 	"github.com/google/cayley/graph"
 	_ "github.com/google/cayley/graph/leveldb"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 func InitDB() *cayley.Handle {
