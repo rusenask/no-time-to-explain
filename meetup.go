@@ -85,7 +85,20 @@ func (h *Handler) getMembers(groupName string, pageSize int) ([]Member, error) {
 	url := fmt.Sprintf("%smembers?group_urlname=%s&page=%d&key=%s", h.cfg.meetupEndpoint, groupName, pageSize, h.cfg.appKey)
 
 	return h._getMembers(url, pageSize)
+}
 
+func (h *Handler) fetchMeetupData(name string) ([]Member, error) {
+
+	members, err := h.getMembers(name, 200)
+	if err != nil {
+		return members, err
+	}
+	// populating graph
+	for _, v := range members {
+		h.connectMemberMeetup(v, name)
+	}
+
+	return members, nil
 }
 
 // _getMembers - recursively dives into meetup, fetching all pages till the end
@@ -183,7 +196,7 @@ func (h *Handler) saveMember(member Member) error {
 	log.WithFields(log.Fields{
 		"ID":   string(member.binaryID()),
 		"name": member.Name,
-	}).Info("saving member")
+	}).Debug("saving member")
 
 	return h.db.Set(member.binaryID(), bts)
 }
@@ -221,7 +234,7 @@ func (h *Handler) getMember(id string) (member Member, err error) {
 	log.WithFields(log.Fields{
 		"ID":   id,
 		"name": member.Name,
-	}).Info("getting member")
+	}).Debug("getting member")
 
 	return member, nil
 }
@@ -275,24 +288,6 @@ func (h *Handler) fetchMemberDetails(id string) (member Member, err error) {
 	return mr, nil
 }
 
-//func (h *Handler) findMember(id string) (member Member) {
-//	member.ID, _ = strconv.Atoi(id)
-//	// getting name
-//	p := cayley.StartPath(h.g, id).Out("named")
-//	it := p.BuildIterator()
-//	for cayley.RawNext(it) {
-//		member.Name = h.g.NameOf(it.Result())
-//	}
-//	// getting city
-//	p_lives := cayley.StartPath(h.g, id).Out("lives")
-//	it_lives := p_lives.BuildIterator()
-//	for cayley.RawNext(it_lives) {
-//		member.City = h.g.NameOf(it_lives.Result())
-//	}
-//
-//	return
-//}
-
 // RemoveSpaces - surprisingly removes spaces
 func RemoveSpaces(str string) string {
 	return strings.Map(func(r rune) rune {
@@ -333,6 +328,20 @@ func (h *Handler) _getLesserPath(current string, nodes []string) *path.Path {
 	return p
 }
 
+// TODO: we could probably save meetup meta to BoltDB, including size so we don't have to walk the path again
+func (h *Handler) getTotalFollowersCount(meetup string) int {
+	p := cayley.StartPath(h.g, meetup).In("follows")
+
+	it := p.BuildIterator()
+
+	size := 0
+	for cayley.RawNext(it) {
+		size += 1
+	}
+
+	return size
+}
+
 func (h *Handler) findIntersectingMembers(meetups []string) (members []Member, err error) {
 	log.WithFields(log.Fields{
 		"meetups": meetups,
@@ -341,6 +350,7 @@ func (h *Handler) findIntersectingMembers(meetups []string) (members []Member, e
 	p := h._getMasterPath(meetups)
 
 	it := p.BuildIterator()
+
 	for cayley.RawNext(it) {
 		//		log.Println(h.g.NameOf(it.Result()))
 		//		members = append(members, h.findMember(h.g.NameOf(it.Result())))
