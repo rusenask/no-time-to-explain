@@ -72,3 +72,28 @@ func (c *DetailsDB) Get(key []byte) (value []byte, err error) {
 	return
 }
 
+// GetAllMembers - returns all captured requests/responses
+func (c *DetailsDB) GetAllMembers() (payloads []Member, err error) {
+	err = c.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(c.bucket)
+		if b == nil {
+			// bucket doesn't exist
+			return nil
+		}
+		c := b.Cursor()
+
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			pl, err := decodeMember(v)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error": err.Error(),
+					"json":  v,
+				}).Warning("Failed to deserialize bytes to payload.")
+			} else {
+				payloads = append(payloads, pl)
+			}
+		}
+		return nil
+	})
+	return
+}
