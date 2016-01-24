@@ -36,6 +36,32 @@ type Member struct {
 	Visited  int     `json:"visited"`
 	Status   string  `json:"status"`
 }
+
+// encode method encodes all exported Member fields to bytes
+func (m *Member) encode() ([]byte, error) {
+	buf := new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+	err := enc.Encode(m)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func (m *Member) binaryID() []byte {
+	return []byte(strconv.Itoa(m.ID))
+}
+
+// decodeMember decodes supplied bytes into Member structure
+func decodeMember(data []byte) (Member, error) {
+	var p Member
+	buf := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+	err := dec.Decode(&p)
+	if err != nil {
+		return p, err
+	}
+	return p, nil
 }
 
 // ResponseMeta holds vital information for navigating through members API
