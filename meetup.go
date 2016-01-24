@@ -24,16 +24,18 @@ type Handler struct {
 
 // Member struct holds information about each member
 type Member struct {
-	ID      int     `json:"id"`
-	Name    string  `json:"name"`
-	Link    string  `json:"link"`
-	Country string  `json:"country"`
-	City    string  `json:"city"`
-	Joined  int     `json:"joined"`
-	Lon     float64 `json:"lon"`
-	Lat     float64 `json:"lat"`
-	Visited int     `json:"visited"`
-	Status  string  `json:"status"`
+	ID       int     `json:"id"`
+	Name     string  `json:"name"`
+	Link     string  `json:"link"`
+	Country  string  `json:"country"`
+	City     string  `json:"city"`
+	Hometown string  `json:"hometown"`
+	Joined   int     `json:"joined"`
+	Lon      float64 `json:"lon"`
+	Lat      float64 `json:"lat"`
+	Visited  int     `json:"visited"`
+	Status   string  `json:"status"`
+}
 }
 
 // ResponseMeta holds vital information for navigating through members API
