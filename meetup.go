@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -14,12 +16,12 @@ import (
 	"github.com/google/cayley/graph/path"
 )
 
-// DBClient provides access to cache, http client and configuration
+// Handler provides access to cache, http client and configuration
 type Handler struct {
 	http *http.Client
 	cfg  *Configuration
 	g    *cayley.Handle
-	qs   *cayley.QuadStore
+	db   DetailsDB
 }
 
 // Member struct holds information about each member
