@@ -159,31 +159,139 @@ func (h *Handler) connectMemberMeetup(member Member, meetup string) (err error) 
 	// [member] ----follows----> [meetup]
 	err = h.addQuad(strconv.Itoa(member.ID), "follows", meetup)
 
-	// adding kind and details
-	err = h.addQuad(strconv.Itoa(member.ID), "kind", "user")
-	err = h.addQuad(strconv.Itoa(member.ID), "named", member.Name)
-	err = h.addQuad(strconv.Itoa(member.ID), "lives", member.City)
-	err = h.addQuad(strconv.Itoa(member.ID), "marked", member.Status)
+	if err != nil {
+		return
+	}
+
+	err = h.saveMember(member)
 	return
 }
 
-func (h *Handler) findMember(id string) (member Member) {
-	member.ID, _ = strconv.Atoi(id)
-	// getting name
-	p := cayley.StartPath(h.g, id).Out("named")
-	it := p.BuildIterator()
-	for cayley.RawNext(it) {
-		member.Name = h.g.NameOf(it.Result())
-	}
-	// getting city
-	p_lives := cayley.StartPath(h.g, id).Out("lives")
-	it_lives := p_lives.BuildIterator()
-	for cayley.RawNext(it_lives) {
-		member.City = h.g.NameOf(it_lives.Result())
+// saveMember - saves member to database
+func (h *Handler) saveMember(member Member) error {
+	bts, err := member.encode()
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"ID":    member.ID,
+			"name":  member.Name,
+			"error": err.Error(),
+		}).Error("failed to save member to database")
+		return err
 	}
 
-	return
+	log.WithFields(log.Fields{
+		"ID":   string(member.binaryID()),
+		"name": member.Name,
+	}).Info("saving member")
+
+	return h.db.Set(member.binaryID(), bts)
 }
+
+// getMember gets member from database
+func (h *Handler) getMember(id string) (member Member, err error) {
+	var m Member
+	m.ID, _ = strconv.Atoi(id)
+
+	bid := m.binaryID()
+
+	memberBts, err := h.db.Get(bid)
+
+	member, err = decodeMember(memberBts)
+
+	if err != nil {
+
+		// since it's not here - let's fetch it
+		if err.Error() == "not found" {
+			member, err = h.fetchMemberDetails(id)
+			if err == nil {
+				// saving member
+				h.saveMember(member)
+			}
+			return
+		}
+
+		log.WithFields(log.Fields{
+			"ID":    m.ID,
+			"error": err.Error(),
+		}).Error("failed to get member binary ID")
+		return
+	}
+
+	log.WithFields(log.Fields{
+		"ID":   id,
+		"name": member.Name,
+	}).Info("getting member")
+
+	return member, nil
+}
+
+func (h *Handler) fetchMemberDetails(id string) (member Member, err error) {
+	// 	 https://api.meetup.com/2/member/1?&sign=true&photo-host=public&page=20
+
+	url := fmt.Sprintf("https://api.meetup.com/2/member/%s?&sign=true&photo-host=public&page=20", id)
+
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+			"url":   url,
+			"key":   h.cfg.appKey,
+		}).Error("failed to create request to get member details")
+		return
+	}
+
+	resp, err := h.http.Do(request)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+			"url":   url,
+			"key":   h.cfg.appKey,
+		}).Error("failed to query API for member details ")
+		return
+	}
+
+	mr := Member{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+			"url":   url,
+			"key":   h.cfg.appKey,
+		}).Error("failed to read body")
+		return
+	}
+
+	err = json.Unmarshal(body, &mr)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+			"url":   url,
+			"key":   h.cfg.appKey,
+		}).Error("failed to unmarshal response from API")
+		return
+	}
+
+	return mr, nil
+}
+
+//func (h *Handler) findMember(id string) (member Member) {
+//	member.ID, _ = strconv.Atoi(id)
+//	// getting name
+//	p := cayley.StartPath(h.g, id).Out("named")
+//	it := p.BuildIterator()
+//	for cayley.RawNext(it) {
+//		member.Name = h.g.NameOf(it.Result())
+//	}
+//	// getting city
+//	p_lives := cayley.StartPath(h.g, id).Out("lives")
+//	it_lives := p_lives.BuildIterator()
+//	for cayley.RawNext(it_lives) {
+//		member.City = h.g.NameOf(it_lives.Result())
+//	}
+//
+//	return
+//}
 
 // RemoveSpaces - surprisingly removes spaces
 func RemoveSpaces(str string) string {
@@ -227,8 +335,7 @@ func (h *Handler) _getLesserPath(current string, nodes []string) *path.Path {
 
 func (h *Handler) findIntersectingMembers(meetups []string) (members []Member, err error) {
 	log.WithFields(log.Fields{
-		"meetups0": meetups[0],
-		"meetups1": meetups[1],
+		"meetups": meetups,
 	}).Info("starting intersect!")
 
 	p := h._getMasterPath(meetups)
@@ -236,7 +343,11 @@ func (h *Handler) findIntersectingMembers(meetups []string) (members []Member, e
 	it := p.BuildIterator()
 	for cayley.RawNext(it) {
 		//		log.Println(h.g.NameOf(it.Result()))
-		members = append(members, h.findMember(h.g.NameOf(it.Result())))
+		//		members = append(members, h.findMember(h.g.NameOf(it.Result())))
+		m, err := h.getMember(h.g.NameOf(it.Result()))
+		if err == nil {
+			members = append(members, m)
+		}
 	}
 	return members, nil
 }
