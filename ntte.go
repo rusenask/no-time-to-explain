@@ -20,12 +20,21 @@ func main() {
 
 	// getting settings
 	cfg := InitSettings()
-	graph := InitDB()
+	graph := InitDB(cfg.graphDatabaseName)
+
+	// getting boltDB
+	db := getDB(cfg.databaseName)
+
+	detailsDB := DetailsDB{
+		db:     db,
+		bucket: []byte(MembersBucketName), /* default bucket name */
+	}
 
 	d := Handler{
 		http: &http.Client{},
 		cfg:  cfg,
 		g:    graph,
+		db:   detailsDB,
 	}
 
 	// deciding what to do

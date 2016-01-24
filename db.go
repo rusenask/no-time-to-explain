@@ -8,16 +8,22 @@ import (
 	_ "github.com/google/cayley/graph/leveldb"
 )
 
-func InitDB() *cayley.Handle {
+// InitDB - initialises graph database
+func InitDB(databaseName string) *cayley.Handle {
+
+	databseType := "leveldb"
+
 	// Initialize the database
-	graph.InitQuadStore("leveldb", "cayley.db", nil)
+	graph.InitQuadStore(databseType, databaseName, nil)
 
 	// Open and use the database
-	db, err := cayley.NewGraph("leveldb", "cayley.db", nil)
+	db, err := cayley.NewGraph(databseType, databaseName, nil)
 
 	if err != nil {
 		log.WithFields(log.Fields{
-			"error": err.Error(),
+			"error":       err.Error(),
+			"databseType": databseType,
+			"databseName": databaseName,
 		}).Fatal("failed to init DB")
 	}
 
