@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -9,6 +10,17 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/meatballhat/negroni-logrus"
 )
+
+type meetupDetailsResponse struct {
+	Name string `json:"name"`
+	Size int    `json:"size"`
+}
+
+type intersectResponse struct {
+	Members     []Member                `json:"members"`
+	Intersected int                     `json:"intersected"`
+	Meetups     []meetupDetailsResponse `json:"meetups"`
+}
 
 func (h *Handler) startAdminInterface() {
 	// starting admin interface
