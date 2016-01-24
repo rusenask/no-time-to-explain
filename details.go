@@ -97,3 +97,19 @@ func (c *DetailsDB) GetAllMembers() (payloads []Member, err error) {
 	})
 	return
 }
+
+// DeleteBucket - deletes bucket with all saved data
+func (c *DetailsDB) DeleteBucket(name []byte) (err error) {
+	err = c.db.Update(func(tx *bolt.Tx) error {
+		err = tx.DeleteBucket(name)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+				"name":  string(name),
+			}).Warning("Failed to delete bucket")
+
+		}
+		return err
+	})
+	return
+}
