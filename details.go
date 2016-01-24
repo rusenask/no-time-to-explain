@@ -46,3 +46,29 @@ func (c *DetailsDB) Set(key, value []byte) error {
 
 	return err
 }
+
+// Get - searches for given key in the cache and returns value if found
+func (c *DetailsDB) Get(key []byte) (value []byte, err error) {
+
+	err = c.db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket(c.bucket)
+		if bucket == nil {
+			return fmt.Errorf("Bucket %q not found!", c.bucket)
+		}
+		// "Byte slices returned from Bolt are only valid during a transaction."
+		var buffer bytes.Buffer
+		val := bucket.Get(key)
+
+		// If it doesn't exist then it will return nil
+		if val == nil {
+			return fmt.Errorf("not found")
+		}
+
+		buffer.Write(val)
+		value = buffer.Bytes()
+		return nil
+	})
+
+	return
+}
+
