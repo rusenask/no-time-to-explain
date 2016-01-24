@@ -183,7 +183,7 @@ func (h *Handler) saveMember(member Member) error {
 	log.WithFields(log.Fields{
 		"ID":   string(member.binaryID()),
 		"name": member.Name,
-	}).Info("saving member")
+	}).Debug("saving member")
 
 	return h.db.Set(member.binaryID(), bts)
 }
@@ -221,7 +221,7 @@ func (h *Handler) getMember(id string) (member Member, err error) {
 	log.WithFields(log.Fields{
 		"ID":   id,
 		"name": member.Name,
-	}).Info("getting member")
+	}).Debug("getting member")
 
 	return member, nil
 }
@@ -315,6 +315,19 @@ func (h *Handler) _getLesserPath(current string, nodes []string) *path.Path {
 	return p
 }
 
+func (h *Handler) getTotalFollowersCount(meetup string) int {
+	p := cayley.StartPath(h.g, meetup).In("follows")
+
+	it := p.BuildIterator()
+
+	size := 0
+	for cayley.RawNext(it) {
+		size += 1
+	}
+
+	return size
+}
+
 func (h *Handler) findIntersectingMembers(meetups []string) (members []Member, err error) {
 	log.WithFields(log.Fields{
 		"meetups": meetups,
@@ -323,6 +336,7 @@ func (h *Handler) findIntersectingMembers(meetups []string) (members []Member, e
 	p := h._getMasterPath(meetups)
 
 	it := p.BuildIterator()
+
 	for cayley.RawNext(it) {
 		//		log.Println(h.g.NameOf(it.Result()))
 		//		members = append(members, h.findMember(h.g.NameOf(it.Result())))
