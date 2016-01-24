@@ -54,6 +54,36 @@ func getBoneRouter(d Handler) *bone.Mux {
 }
 
 // IntersectionHandler returns intersected members for given meetups
+// http://localhost:8080/api/intersect?q=kubernetes-london&q=docker-london
 func (h *Handler) IntersectionHandler(w http.ResponseWriter, req *http.Request) {
+	q := req.URL.Query()
+
+	log.WithFields(log.Fields{
+		"query": q["q"],
+	}).Info("got query")
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var mDetails []meetupDetailsResponse
+	for _, v := range q["q"] {
+		size := h.getTotalFollowersCount(v)
+		mDetails = append(mDetails, meetupDetailsResponse{Size: size, Name: v})
+	}
+
+	var response intersectResponse
+
+	response.Meetups = mDetails
+	b, err := json.Marshal(response)
+
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		w.Write(b)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(200)
 
 }
