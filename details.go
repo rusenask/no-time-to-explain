@@ -29,3 +29,20 @@ func getDB(name string) *bolt.DB {
 
 	return db
 }
+
+// Set - saves given key and value pair to cache
+func (c *DetailsDB) Set(key, value []byte) error {
+	err := c.db.Update(func(tx *bolt.Tx) error {
+		bucket, err := tx.CreateBucketIfNotExists(c.bucket)
+		if err != nil {
+			return err
+		}
+		err = bucket.Put(key, value)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return err
+}
