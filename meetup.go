@@ -85,7 +85,20 @@ func (h *Handler) getMembers(groupName string, pageSize int) ([]Member, error) {
 	url := fmt.Sprintf("%smembers?group_urlname=%s&page=%d&key=%s", h.cfg.meetupEndpoint, groupName, pageSize, h.cfg.appKey)
 
 	return h._getMembers(url, pageSize)
+}
 
+func (h *Handler) fetchMeetupData(name string) ([]Member, error) {
+
+	members, err := h.getMembers(name, 200)
+	if err != nil {
+		return members, err
+	}
+	// populating graph
+	for _, v := range members {
+		h.connectMemberMeetup(v, name)
+	}
+
+	return members, nil
 }
 
 // _getMembers - recursively dives into meetup, fetching all pages till the end
