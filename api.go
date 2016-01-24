@@ -70,9 +70,20 @@ func (h *Handler) IntersectionHandler(w http.ResponseWriter, req *http.Request) 
 		mDetails = append(mDetails, meetupDetailsResponse{Size: size, Name: v})
 	}
 
+	intersectingMembers, err := h.findIntersectingMembers(q["q"])
+
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	var response intersectResponse
 
 	response.Meetups = mDetails
+	response.Members = intersectingMembers
+	response.Intersected = len(intersectingMembers)
+
 	b, err := json.Marshal(response)
 
 	if err != nil {

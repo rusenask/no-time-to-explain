@@ -315,6 +315,7 @@ func (h *Handler) _getLesserPath(current string, nodes []string) *path.Path {
 	return p
 }
 
+// TODO: we could probably save meetup meta to BoltDB, including size so we don't have to walk the path again
 func (h *Handler) getTotalFollowersCount(meetup string) int {
 	p := cayley.StartPath(h.g, meetup).In("follows")
 
