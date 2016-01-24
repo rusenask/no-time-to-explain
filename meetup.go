@@ -275,24 +275,6 @@ func (h *Handler) fetchMemberDetails(id string) (member Member, err error) {
 	return mr, nil
 }
 
-//func (h *Handler) findMember(id string) (member Member) {
-//	member.ID, _ = strconv.Atoi(id)
-//	// getting name
-//	p := cayley.StartPath(h.g, id).Out("named")
-//	it := p.BuildIterator()
-//	for cayley.RawNext(it) {
-//		member.Name = h.g.NameOf(it.Result())
-//	}
-//	// getting city
-//	p_lives := cayley.StartPath(h.g, id).Out("lives")
-//	it_lives := p_lives.BuildIterator()
-//	for cayley.RawNext(it_lives) {
-//		member.City = h.g.NameOf(it_lives.Result())
-//	}
-//
-//	return
-//}
-
 // RemoveSpaces - surprisingly removes spaces
 func RemoveSpaces(str string) string {
 	return strings.Map(func(r rune) rune {
