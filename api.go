@@ -41,6 +41,7 @@ func getBoneRouter(d Handler) *bone.Mux {
 	return mux
 }
 
+// IntersectionHandler returns intersected members for given meetups
 func (h *Handler) IntersectionHandler(w http.ResponseWriter, req *http.Request) {
 
 }
