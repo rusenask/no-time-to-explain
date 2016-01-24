@@ -45,12 +45,50 @@ func getBoneRouter(d Handler) *bone.Mux {
 	mux := bone.New()
 
 	mux.Get("/api/intersect", http.HandlerFunc(d.IntersectionHandler))
+	mux.Get("/api/fetch", http.HandlerFunc(d.FetchMeetupHandler))
 
 	mux.HandleFunc("/*", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "static/")
 	})
 
 	return mux
+}
+
+func (h *Handler) FetchMeetupHandler(w http.ResponseWriter, req *http.Request) {
+	q := req.URL.Query()
+
+	meetup := q["meetup"][0]
+	log.WithFields(log.Fields{
+		"meetup": meetup,
+	}).Info("got query to fetch meetup")
+
+	w.Header().Set("Content-Type", "application/json")
+
+	members, err := h.fetchMeetupData(meetup)
+
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var mr meetupDetailsResponse
+
+	mr.Size = len(members)
+	mr.Name = meetup
+
+	b, err := json.Marshal(mr)
+
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		w.Write(b)
+		return
+	}
+
+	w.WriteHeader(200)
+
 }
 
 // IntersectionHandler returns intersected members for given meetups
@@ -94,7 +132,6 @@ func (h *Handler) IntersectionHandler(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(200)
 
 }
