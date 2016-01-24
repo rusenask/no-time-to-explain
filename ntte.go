@@ -15,6 +15,7 @@ func main() {
 	fetch := flag.String("fetch", "", "fetch some meetup, url required")
 	printAll := flag.Bool("all", false, "print all quads")
 	intersect := flag.String("intersect", "", "find intersecting users from meetups, separated by comma")
+	followers := flag.String("followers", "", "get followers count for specified meetup")
 
 	flag.Parse()
 
@@ -90,6 +91,12 @@ func main() {
 
 		return
 
+	}
+
+	if *followers != "" {
+		size := d.getTotalFollowersCount(*followers)
+		fmt.Printf("Meetup %s has total %d followers \n", *followers, size)
+		return
 	}
 
 	// nothing?
