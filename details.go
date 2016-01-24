@@ -17,3 +17,15 @@ type DetailsDB struct {
 	bucket []byte
 }
 
+// getDB - return bolt db connection
+func getDB(name string) *bolt.DB {
+	log.WithFields(log.Fields{
+		"databaseName": name,
+	}).Info("Initiating database")
+	db, err := bolt.Open(name, 0600, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return db
+}
