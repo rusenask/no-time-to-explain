@@ -91,6 +91,26 @@ func (h *Handler) FetchMeetupHandler(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func (h *Handler) GetAllMeetupsHandler(w http.ResponseWriter, req *http.Request) {
+	meetups := h.getAllMeetups()
+
+	var mr allMeetupsResponse
+
+	mr.Meetups = meetups
+
+	b, err := json.Marshal(mr)
+
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		w.Write(b)
+		return
+	}
+
+	w.WriteHeader(200)
+}
+
 // IntersectionHandler returns intersected members for given meetups
 // http://localhost:8080/api/intersect?q=kubernetes-london&q=docker-london
 func (h *Handler) IntersectionHandler(w http.ResponseWriter, req *http.Request) {
