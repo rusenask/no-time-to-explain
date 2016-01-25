@@ -110,6 +110,20 @@ func (h *Handler) fetchMeetupData(name string) ([]Member, error) {
 	return members, nil
 }
 
+func (h *Handler) getAllMeetups() []string {
+	p := cayley.StartPath(h.g, "meetup").In("kind")
+
+	it := p.BuildIterator()
+
+	var meetups []string
+
+	for cayley.RawNext(it) {
+		meetups = append(meetups, h.g.NameOf(it.Result()))
+	}
+
+	return meetups
+}
+
 // _getMembers - recursively dives into meetup, fetching all pages till the end
 func (h *Handler) _getMembers(url string, pageSize int) ([]Member, error) {
 	//	https://api.meetup.com/2/members?group_urlname=frontend&page=200&key=343f7567781b654151e2c635c5445a&order=name
