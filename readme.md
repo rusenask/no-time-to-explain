@@ -17,6 +17,10 @@ getting intersections:
 
     scFollows.Intersect(klFollows)
 
+getting meetups:
+
+     g.V('meetup').As('source').In('kind').As('target').All()
+
 function example:
 
 
