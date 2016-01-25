@@ -16,6 +16,10 @@ type meetupDetailsResponse struct {
 	Size int    `json:"size"`
 }
 
+type allMeetupsResponse struct {
+	Meetups []string `json:"meetups"`
+}
+
 type intersectResponse struct {
 	Members     []Member                `json:"members"`
 	Intersected int                     `json:"intersected"`
@@ -46,6 +50,7 @@ func getBoneRouter(d Handler) *bone.Mux {
 
 	mux.Get("/api/intersect", http.HandlerFunc(d.IntersectionHandler))
 	mux.Get("/api/fetch", http.HandlerFunc(d.FetchMeetupHandler))
+	mux.Get("/api/meetups", http.HandlerFunc(d.GetAllMeetupsHandler))
 
 	mux.HandleFunc("/*", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "static/")
@@ -54,6 +59,8 @@ func getBoneRouter(d Handler) *bone.Mux {
 	return mux
 }
 
+// FetchMeetupHandler - fetches supplied meetup:
+// http://localhost:8080/api/fetch?meetup=raspberry-pint-london
 func (h *Handler) FetchMeetupHandler(w http.ResponseWriter, req *http.Request) {
 	q := req.URL.Query()
 
