@@ -93,6 +93,15 @@ func (h *Handler) fetchMeetupData(name string) ([]Member, error) {
 	if err != nil {
 		return members, err
 	}
+
+	// meetup data got, we can probably save meetup
+	err = h.addQuad(name, "kind", "meetup")
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":  err.Error(),
+			"meetup": name,
+		}).Error("failed to add kind information to meetup")
+	}
 	// populating graph
 	for _, v := range members {
 		h.connectMemberMeetup(v, name)
@@ -172,6 +181,10 @@ func (h *Handler) connectMemberMeetup(member Member, meetup string) (err error) 
 	// [member] ----follows----> [meetup]
 	err = h.addQuad(strconv.Itoa(member.ID), "follows", meetup)
 
+	if err != nil {
+		return
+	}
+	err = h.addQuad(strconv.Itoa(member.ID), "kind", "person")
 	if err != nil {
 		return
 	}
