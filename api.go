@@ -55,13 +55,18 @@ func getBoneRouter(d Handler) *bone.Mux {
 
 	mux.Get("/api/intersect", http.HandlerFunc(d.IntersectionHandler))
 	mux.Get("/api/fetch", http.HandlerFunc(d.FetchMeetupHandler))
+
+	mux.Get("/api/meetups/detail", http.HandlerFunc(d.GetAllMeetupsDetailedHandler))
+	mux.Get("/api/meetups/:id", http.HandlerFunc(d.GetMeetupHandler))
 	mux.Get("/api/meetups", http.HandlerFunc(d.GetAllMeetupsHandler))
 
-	mux.HandleFunc("/*", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "static/")
-	})
+	mux.Handle("/*", http.FileServer(http.Dir("static/build/public")))
 
 	return mux
+}
+
+func getMeetupHref(meetup string) string {
+	return fmt.Sprintf("/api/meetups/%s", meetup)
 }
 
 // FetchMeetupHandler - fetches supplied meetup:
