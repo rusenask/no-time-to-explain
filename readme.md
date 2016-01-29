@@ -1,3 +1,17 @@
+
+# API
+
+
+
+
+Getting intersection between any number of meetups:
+
+    http://localhost:8080/api/intersect?q=kubernetes-london&q=docker-london
+
+
+
+
+
 # examples
 
 example london query:
