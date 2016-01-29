@@ -149,6 +149,29 @@ func (h *Handler) GetAllMeetupsDetailedHandler(w http.ResponseWriter, req *http.
 		return
 	}
 }
+
+// GetMeetupHandler - gets meetup data such as name, size, href
+// http://localhost:8080/api/meetups/kubernetes-london
+func (h *Handler) GetMeetupHandler(w http.ResponseWriter, req *http.Request) {
+	meetupName := bone.GetValue(req, "id")
+
+	followers := h.getTotalFollowersCount(meetupName)
+	var mr meetupDetailsResponse
+	mr.Name = meetupName
+	mr.Size = followers
+	mr.Href = getMeetupHref(meetupName)
+
+	b, err := json.Marshal(mr)
+
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		w.Write(b)
+		return
+	}
 }
 
 // IntersectionHandler returns intersected members for given meetups
