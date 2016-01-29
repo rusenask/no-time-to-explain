@@ -13,7 +13,12 @@ import (
 
 type meetupDetailsResponse struct {
 	Name string `json:"name"`
-	Size int    `json:"size"`
+	Size int    `json:"size,omitempty"`
+	Href string `json:"href"`
+}
+
+type allMeetupsDetailedResponse struct {
+	Meetups []meetupDetailsResponse `json:"meetups"`
 }
 
 type allMeetupsResponse struct {
