@@ -93,6 +93,7 @@ func (h *Handler) FetchMeetupHandler(w http.ResponseWriter, req *http.Request) {
 
 	mr.Size = len(members)
 	mr.Name = meetup
+	mr.Href = getMeetupHref(meetup)
 
 	b, err := json.Marshal(mr)
 
@@ -121,9 +122,12 @@ func (h *Handler) GetAllMeetupsHandler(w http.ResponseWriter, req *http.Request)
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
 		w.Write(b)
 		return
 	}
+}
 
 func (h *Handler) GetAllMeetupsDetailedHandler(w http.ResponseWriter, req *http.Request) {
 	meetups, err := h.getAllMeetupsDetailed()
@@ -188,7 +192,8 @@ func (h *Handler) IntersectionHandler(w http.ResponseWriter, req *http.Request) 
 	var mDetails []meetupDetailsResponse
 	for _, v := range q["q"] {
 		size := h.getTotalFollowersCount(v)
-		mDetails = append(mDetails, meetupDetailsResponse{Size: size, Name: v})
+		href := getMeetupHref(v)
+		mDetails = append(mDetails, meetupDetailsResponse{Size: size, Name: v, Href: href})
 	}
 
 	intersectingMembers, err := h.findIntersectingMembers(q["q"])
