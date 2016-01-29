@@ -13,7 +13,12 @@ import (
 
 type meetupDetailsResponse struct {
 	Name string `json:"name"`
-	Size int    `json:"size"`
+	Size int    `json:"size,omitempty"`
+	Href string `json:"href"`
+}
+
+type allMeetupsDetailedResponse struct {
+	Meetups []meetupDetailsResponse `json:"meetups"`
 }
 
 type allMeetupsResponse struct {
@@ -50,13 +55,18 @@ func getBoneRouter(d Handler) *bone.Mux {
 
 	mux.Get("/api/intersect", http.HandlerFunc(d.IntersectionHandler))
 	mux.Get("/api/fetch", http.HandlerFunc(d.FetchMeetupHandler))
+
+	mux.Get("/api/meetups/detail", http.HandlerFunc(d.GetAllMeetupsDetailedHandler))
+	mux.Get("/api/meetups/:id", http.HandlerFunc(d.GetMeetupHandler))
 	mux.Get("/api/meetups", http.HandlerFunc(d.GetAllMeetupsHandler))
 
-	mux.HandleFunc("/*", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "static/")
-	})
+	mux.Handle("/*", http.FileServer(http.Dir("static/build/public")))
 
 	return mux
+}
+
+func getMeetupHref(meetup string) string {
+	return fmt.Sprintf("/api/meetups/%s", meetup)
 }
 
 // FetchMeetupHandler - fetches supplied meetup:
@@ -83,6 +93,7 @@ func (h *Handler) FetchMeetupHandler(w http.ResponseWriter, req *http.Request) {
 
 	mr.Size = len(members)
 	mr.Name = meetup
+	mr.Href = getMeetupHref(meetup)
 
 	b, err := json.Marshal(mr)
 
@@ -111,11 +122,60 @@ func (h *Handler) GetAllMeetupsHandler(w http.ResponseWriter, req *http.Request)
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
 		w.Write(b)
 		return
 	}
+}
 
-	w.WriteHeader(200)
+func (h *Handler) GetAllMeetupsDetailedHandler(w http.ResponseWriter, req *http.Request) {
+	meetups, err := h.getAllMeetupsDetailed()
+
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	var mr allMeetupsDetailedResponse
+
+	mr.Meetups = meetups
+
+	b, err := json.Marshal(mr)
+
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		w.Write(b)
+		return
+	}
+}
+
+// GetMeetupHandler - gets meetup data such as name, size, href
+// http://localhost:8080/api/meetups/kubernetes-london
+func (h *Handler) GetMeetupHandler(w http.ResponseWriter, req *http.Request) {
+	meetupName := bone.GetValue(req, "id")
+
+	followers := h.getTotalFollowersCount(meetupName)
+	var mr meetupDetailsResponse
+	mr.Name = meetupName
+	mr.Size = followers
+	mr.Href = getMeetupHref(meetupName)
+
+	b, err := json.Marshal(mr)
+
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		w.Write(b)
+		return
+	}
 }
 
 // IntersectionHandler returns intersected members for given meetups
@@ -132,7 +192,8 @@ func (h *Handler) IntersectionHandler(w http.ResponseWriter, req *http.Request) 
 	var mDetails []meetupDetailsResponse
 	for _, v := range q["q"] {
 		size := h.getTotalFollowersCount(v)
-		mDetails = append(mDetails, meetupDetailsResponse{Size: size, Name: v})
+		href := getMeetupHref(v)
+		mDetails = append(mDetails, meetupDetailsResponse{Size: size, Name: v, Href: href})
 	}
 
 	intersectingMembers, err := h.findIntersectingMembers(q["q"])

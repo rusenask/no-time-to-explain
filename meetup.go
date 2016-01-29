@@ -120,8 +120,28 @@ func (h *Handler) getAllMeetups() []string {
 	for cayley.RawNext(it) {
 		meetups = append(meetups, h.g.NameOf(it.Result()))
 	}
-
 	return meetups
+}
+
+// getAllMeetupsDetailed - gets detailed info for meetups
+func (h *Handler) getAllMeetupsDetailed() ([]meetupDetailsResponse, error) {
+	p := cayley.StartPath(h.g, "meetup").In("kind")
+
+	it := p.BuildIterator()
+
+	var meetups []meetupDetailsResponse
+
+	for cayley.RawNext(it) {
+		var d meetupDetailsResponse
+		d.Name = h.g.NameOf(it.Result())
+		d.Href = getMeetupHref(d.Name)
+		// TODO: OPTIMIZE
+		d.Size = h.getTotalFollowersCount(d.Name)
+
+		// appending meetup to array
+		meetups = append(meetups, d)
+	}
+	return meetups, nil
 }
 
 // _getMembers - recursively dives into meetup, fetching all pages till the end
